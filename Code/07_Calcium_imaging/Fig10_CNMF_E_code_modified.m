@@ -2,6 +2,9 @@
 clear; clc; close all;
 
 % you need CNMF-E code from https://github.com/zhoupc/CNMF_E
+% 2021 Nat. Commun. [Parallel processing of working memory and temporal
+% information by distinct types of cortical projection neurons]
+% last edited by Bae JW 2021-06-11
 %% choose data
 neuron = Sources2D();
 % nam = get_fullname('./data_1p.tif');          % this demo data is very small, here we just use it as an example

@@ -3,6 +3,7 @@ function [p l] = salt2(test, base, wn, dt)
 %
 %   Dohoung Kim, Jan. 2016.
 %   Modified Balazs Hangya's salt code (balazs.cshl@gmail.com).
+%   modified by Bae & Jeong 2021 2021 Nat. Commun. 2021-06-11
 
 edges = 0:dt:wn;
 nE = length(edges);

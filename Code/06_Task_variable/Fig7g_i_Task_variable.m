@@ -1,5 +1,9 @@
 clc; clearvars; close all; 
-
+%%
+% Code written by Bae JW, Jeong H 
+% 2021 Nat. Commun. [Parallel processing of working memory and temporal
+% information by distinct types of cortical projection neurons]
+% last edited by Bae JW 2021-06-11
 %% Load cell list
 target = [tag.wsrxfp tag.wsefr tag.pc] & T.firingRate>=0.5;
 typeList = {'IT';'PT';'PP'};

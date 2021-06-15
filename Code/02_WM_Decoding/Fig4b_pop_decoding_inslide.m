@@ -1,7 +1,11 @@
 clearvars; clc; close all;
 %%
 % population decoding in slide with SVM method
-% last edited by JWBAE 2021-06-11
+
+% Code written by Bae JW, Jeong H 
+% 2021 Nat. Commun. [Parallel processing of working memory and temporal
+% information by distinct types of cortical projection neurons]
+% last edited by Bae JW 2021-06-11
 
 load('D:\Backup\code\WM_2021\Data\Untagged\Untagged_WS.mat');
 

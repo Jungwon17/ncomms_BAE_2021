@@ -1,6 +1,10 @@
 clearvars; clc; close all;
 
 %%
+% Code written by Bae JW, Jeong H 
+% 2021 Nat. Commun. [Parallel processing of working memory and temporal
+% information by distinct types of cortical projection neurons]
+
 % This code is modified from the code from https://github.com/machenslab/dPCA
 % you need sub-functions from https://github.com/machenslab/dPCA
 % last edited by JWBAE 2021-06-11

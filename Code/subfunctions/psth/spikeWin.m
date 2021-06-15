@@ -3,6 +3,8 @@ function spikeTime = spikeWin(spikeData, eventTime, wins)
 %   spikeData: raw data from MClust. Unit must be ms.
 %   eventTime: each output cell will be eventTime aligned spike data. unit must be ms.
 %   win: spike within windows will be included. unit must be ms.
+%   originally wirtten by Dohoung Kim
+%   modified by Bae & Jeong 2021 2021 Nat. Commun. 2021-06-11
 narginchk(3, 3);
 
 if isempty(eventTime); spikeTime = []; return; end;

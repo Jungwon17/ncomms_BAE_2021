@@ -8,6 +8,7 @@ function varargout = logrank(X,Y)
 %       Second column: censoring (1: if censored observation)
 %   Author: Dohoung Kim
 %   Version 1.0 (2015/1/9)
+%   modified by Bae & Jeong 2021 2021 Nat. Commun. 2021-06-11
 %% Start
 n1 = size(X,1);
 n2 = size(Y,1);

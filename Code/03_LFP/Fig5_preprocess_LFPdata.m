@@ -2,6 +2,11 @@
 clear; clc;
 close all;
 
+% Code written by Lee H, Bae JW, Jeong H 
+% 2021 Nat. Commun. [Parallel processing of working memory and temporal
+% information by distinct types of cortical projection neurons]
+% last edited by Bae JW 2021-06-11
+
 tic;
 %% para
 n = 4; %Controls the order of the filter

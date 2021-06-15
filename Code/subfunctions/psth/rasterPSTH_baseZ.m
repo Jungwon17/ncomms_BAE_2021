@@ -7,7 +7,8 @@ function [xpt,ypt,spikeBin,spikeHist,spikeConv,spikeConvZ, spikeSEM,spikeConvStd
 %   resolution: sigma for convolution = binsize * resolution.
 %   dot: 1-dot, 0-line
 %   unit of xpt will be msec.
-%   edited by JWBAE 2020-11-23
+%   originally wirtten by Dohoung Kim
+%   modified by Bae & Jeong 2021 2021 Nat. Commun. 2021-06-11
 
 narginchk(6, 7);
 if isempty(spikeTime) || isempty(trialIndex) || length(spikeTime) ~= size(trialIndex,1) || length(win) ~= 2

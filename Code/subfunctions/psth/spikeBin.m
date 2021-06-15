@@ -7,8 +7,9 @@ function [time, spk] = spikeBin(spikeTime,timeWindow,binWindow,binStep)
 %   binWindow: binning window in ms (eq. 500 ms)
 %   binStep: binning step in ms (eq. 100 ms)
 %
-% Author: Dohoung Kim
-% Nov. 2015
+%   Author: Dohoung Kim
+%   Nov. 2015
+%   modified by Bae & Jeong 2021 2021 Nat. Commun. 2021-06-11
 narginchk(4,4);
 
 bin = [timeWindow(1):binStep:(timeWindow(2)-binWindow); ...

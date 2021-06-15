@@ -9,7 +9,8 @@ function axesPosition = axpt(nX, nY, xPos, yPos, positionVector, interval)
 %       the most upper row is 1. the most lower row is nY
 %   interval: interval between col and row. it is proportional
 %   to width and height of figure. should be two row vector ([0.05 0.05])
-%
+%   originally wirtten by Dohoung Kim
+%   modified by Bae & Jeong 2021 2021 Nat. Commun. 2021-06-11
 
 
 narginchk(4,6);
