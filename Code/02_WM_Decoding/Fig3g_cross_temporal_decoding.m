@@ -7,6 +7,7 @@ clearvars; clc; close all;
 % information by distinct types of cortical projection neurons]
 % last edited by Bae JW 2021-06-11
 
+%%
 Directory='D:\Backup\code\WM_2021';
 cd(Directory); % set your directory here
 %% load cell data
