@@ -1,6 +1,10 @@
 clear; clc;
 close all;
-
+%%
+% Code written by Lee H, Bae JW, Jeong H 
+% 2021 Nat. Commun. [Parallel processing of working memory and temporal
+% information by distinct types of cortical projection neurons]
+% last edited by Lee H 2021-07-06
 %% Set paths
 path_data = ''; % path where data saved
 path_save_ori = ''; % path where results be saved
