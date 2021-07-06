@@ -1,30 +1,23 @@
-%% 
 clear; clc;
 close all;
 
-% Code written by Lee H, Bae JW, Jeong H 
-% 2021 Nat. Commun. [Parallel processing of working memory and temporal
-% information by distinct types of cortical projection neurons]
-% last edited by Bae JW 2021-06-11
+%% Set paths
+path_data = ''; % path where data saved
+path_save_ori = ''; % path where results be saved
 
-tic;
-%% para
+%% Main
 n = 4; %Controls the order of the filter
-fpass=[0.5 100];
-
-% select the raw data folder
-path_data = '';
-path_save_ori = '';
+fpass=[0.5 100]; % [Hz]
 
 filenames = dir(path_data);
-
 for f_i = 3:length(filenames)
     
     clc;
-    disp([num2str(f_i) ' / ' num2str(length(filenames))]);
+    disp([num2str(f_i-2) ' / ' num2str(length(filenames)-2)]);
     
     temp_folder = filenames(f_i).name;
     
+    %%% For save
     cd(path_save_ori);
     mkdir(['save_' temp_folder]);
     path_save = [path_save_ori '\save_' temp_folder];
@@ -35,12 +28,12 @@ for f_i = 3:length(filenames)
     list_folder = dir();
     for f_ii = 3:length(list_folder)
         
-        disp([ '%%' num2str(f_ii) ' / ' num2str(length(list_folder))]);
+        disp([ '%%' num2str(f_ii-2) ' / ' num2str(length(list_folder)-2)]);
         
         cd(path_neuron);
         current_folder = list_folder(f_ii).name;
         
-        %% 
+        %% Exception
         if contains(current_folder, 'e2_dv320') || contains(current_folder, 'e9_dv480')...,
                 || contains(current_folder, 'r47_dv720') || contains(current_folder, 'r54_dv80')
             continue;
@@ -48,28 +41,22 @@ for f_i = 3:length(filenames)
         
         %% Sampling frequency
         Fs_raw = 32552;
-        
         if contains(temp_folder, 'rxfp 56') || contains(temp_folder, 'rxfp 57')...,
                 || contains(temp_folder, 'rxfp 58') || contains(temp_folder, 'rxfp 59')...,
                 || contains(temp_folder, 'rxfp 60') || contains(temp_folder, 'rxfp 62')...,
-                || contains(temp_folder, 'rxfp 66') || contains(temp_folder, 'rxfp 67')...,%%% Fixed
+                || contains(temp_folder, 'rxfp 66') || contains(temp_folder, 'rxfp 67')...,
                 || contains(temp_folder, 'efr 10') || contains(temp_folder, 'efr 11')...,
-                || contains(temp_folder, 'efr 13') || contains(temp_folder, 'efr 17')...,%%% Fixed 200202
-                || contains(temp_folder, 'efr 18') || contains(temp_folder, 'efr 20')...,%%% Fixed 200202
+                || contains(temp_folder, 'efr 13') || contains(temp_folder, 'efr 17')...,
+                || contains(temp_folder, 'efr 18') || contains(temp_folder, 'efr 20')...,
                 || contains(temp_folder, 'efr 21')
             Fs_raw = 1017;
         end
-        
-        if contains(current_folder,'r57_dv0_f4000')
-            Fs_raw = 32552;
-        end
+        if contains(current_folder,'r57_dv0_f4000'); Fs_raw = 32552; end
         
         if contains(current_folder, 'dv')
             cd([path_neuron '\' current_folder]);
             
-            if exist('Events.mat','file') == 0
-                continue;
-            end
+            if exist('Events.mat','file') == 0; continue; end
             
             load('Events.mat');
             [n_trial,~]=size(eventTime);
@@ -88,23 +75,20 @@ for f_i = 3:length(filenames)
             delayLength = eventTime(:,4)-eventTime(:,3);
             
             totLFP = cell(1,8);
-            checkUseMat = zeros(1,8); %%% added 200601
+            checkUseMat = zeros(1,8); 
             ratioSaturate = zeros(1,8);
             
             time_ms_save = cell(1,8);
             samples_ms_save = zeros(1,8);
-            
-            baseT = 10;
-            baseLFP = cell(1,8);
-            
+
             parfor ch_i = 1:8
                 channelNum = ch_i;
                 
-                %% CSC -> MAT
+                 %% CSC -> MAT
                 checkFile = exist(['CSC' num2str(channelNum) '.ncs'],'file');
                 
                 if checkFile ~= 0
-                    [Timestamps, Samples, Header]= Nlx2MatCSC(['CSC' num2str(channelNum) '.ncs'], [1 0 0 0 1], 1, 1, []);
+                    [Timestamps, Samples, Header]= Nlx2MatCSC(['CSC' num2str(channelNum) '.ncs'], [1 0 0 0 1], 1, 1, []); %%% Need Neuralyx software
                     
                     time_diff = diff(Timestamps);
                     idx_stop = find( time_diff > 1e6 );
@@ -120,74 +104,57 @@ for f_i = 3:length(filenames)
                     tt = repmat(temp_time,[512 1])+repmat(t_temp,[1 length(temp_time)]);
                     times = tt(:);
                     
-                    %%% check %%% 210218
                     chekchUse = 0;
                     thre = 32767;
                     
-                    if mean(abs(samples) >= thre) < (0.01) %%% 210302
-                        chekchUse = 1;
-                    end
+                    if mean(abs(samples) >= thre) < (0.01); chekchUse = 1; end
                     
                     checkUseMat(1,ch_i) = chekchUse;
                     ratioSaturate(1,ch_i) = mean(abs(samples) >= thre);
                     
                     %% Denoising
-                    W0 = 60/(Fs_raw/2);  BW = W0/200; %% 21.02.18 
-                    [bd,ad] = iirnotch(W0,BW); %% 21.02.18 
+                    W0 = 60/(Fs_raw/2);  BW = W0/200;
+                    [bd,ad] = iirnotch(W0,BW);
                     
                     samples = filter(bd,ad,samples);
                     
                     %%% FFT
-                    T = 1/Fs_raw;             % Sampling period
-                    L = length(samples);             % Length of signal
-                    t = (0:L-1)*T;        % Time vector
-                    f = Fs_raw*(0:(L/2))/L;
+                    T = 1/Fs_raw; L = length(samples);
+                    t = (0:L-1)*T; f = Fs_raw*(0:(L/2))/L;
                     
                     Y = fft(samples);
                     
                     P2 = abs(Y/L); P1 = P2(1:L/2+1);
                     P1(2:end-1) = 2*P1(2:end-1);
                     
-                    %%% Check
-                    idx1 = logical(f>59.8 & f<60.2);
-                    check1 = mean(P1(idx1));
-                    
-                    idx2 = logical(f>59.6 & f<59.8) | logical(f>60.2 & f<60.4);
-                    check2 = mean(P1(idx2));
+                    idx1 = logical(f>59.8 & f<60.2); check1 = mean(P1(idx1));
+                    idx2 = logical(f>59.6 & f<59.8) | logical(f>60.2 & f<60.4); check2 = mean(P1(idx2));
                     
                     while check1 > check2 * 1.2
                         P1(~idx1) = 0;
                         [~,idxMax] = max(P1);
                         
                         newF = f(idxMax);
-                        W0 = newF/(Fs_raw/2);  BW = W0/1000; %% 21.03.02 
-                        
-                        [bd,ad] = iirnotch(W0,BW); %% 21.02.18 
+                        W0 = newF/(Fs_raw/2);  BW = W0/1000;
+                        [bd,ad] = iirnotch(W0,BW);
                         
                         samples = filter(bd,ad,samples);
                         
-                        %%% FFT
                         Y = fft(samples);
                         
                         P2 = abs(Y/L); P1 = P2(1:L/2+1);
                         P1(2:end-1) = 2*P1(2:end-1);
                         
-                        %%% Check
-                        idx1 = logical(f>59.8 & f<60.2);
-                        check1 = mean(P1(idx1));
-                        
-                        idx2 = logical(f>59.6 & f<59.8) | logical(f>60.2 & f<60.4);
-                        check2 = mean(P1(idx2));
+                        idx1 = logical(f>59.8 & f<60.2); check1 = mean(P1(idx1));
+                        idx2 = logical(f>59.6 & f<59.8) | logical(f>60.2 & f<60.4); check2 = mean(P1(idx2));
                     end
                     
                     %% Downsampling
-                    samples_deci = decimate(samples,fix(Fs_raw/1017),'FIR'); %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% decimate 적용 입니다
+                    samples_deci = decimate(samples,fix(Fs_raw/1017),'FIR');
                     times_deci = decimate(times,fix(Fs_raw/1017),'FIR');
                     
-                    times_shifted = round((times_deci - start_time)/1e3); %% ms unit
-                    
+                    times_shifted = round((times_deci - start_time)/1e3);
                     t_idx = logical(diff(times_shifted));
-                    
                     if t_idx(end) == 0
                         t_idx = ([t_idx;0]) & logical(times_shifted>0);
                     elseif t_idx(end) == 1
@@ -195,51 +162,43 @@ for f_i = 3:length(filenames)
                     end
                     
                     times_ms = times_shifted(t_idx);
-                    samples_ms = samples_deci(t_idx); %% Fixed 191010
+                    samples_ms = samples_deci(t_idx);
                     
                     time_ms_save{1,ch_i} = times_ms;
                     samples_ms_save(ch_i) = length(samples_ms);
                     
                     Fs = 1000;
-                    samples_ms=samples_ms.*(1000/32767); %%% scaling
+                    samples_ms=samples_ms.*(1000/32767); % Scaling
                     
-                    %% Filtering
+                    %% Filtering (Bandpass)
                     sample_filtered = nan(length(samples_ms), 2);
                     sample_filtered(:,1) = samples_ms;
                     
                     for filt_i=1:size(sample_filtered,2)-1
-                        [b,a]=butter(n,fpass(filt_i,:)*2/Fs); % bandpass
+                        [b,a]=butter(n,fpass(filt_i,:)*2/Fs);
                         sample_filtered(:,filt_i+1)=filtfilt(b,a,sample_filtered(:,1));
                     end
                     
                     %% data reshape
-                    totT = 13000; % 4000 + 4000 + 5000
+                    totT = 13000; % 4000 + 4000 + 5000 ms
                     lfp_matrix = nan(n_trial,totT,size(sample_filtered,2));
                     for trial_i = 1:n_trial
-                        
                         trial_info = eventTime(trial_i,:);
                         
                         [~, sample_on] = min( abs(times_ms - trial_info(1)) );
                         idx_trial = (sample_on-2000+1):(sample_on+2000+4000+5000);
-                        if min(idx_trial) < 1 || max(idx_trial) > size(sample_filtered,1)
-                            continue;
-                        end
+                        if min(idx_trial) < 1 || max(idx_trial) > size(sample_filtered,1); continue; end
                         
-                        lfp_matrix(trial_i,:,:) = sample_filtered(idx_trial,:); %%% 4 + 4 + 5
+                        lfp_matrix(trial_i,:,:) = sample_filtered(idx_trial,:);
                     end
                     
-                    %%
+                    %% remove outlier
                     tp = lfp_matrix(:,:,2);
                     
-                    tpval = std(tp,0,2)
-                    valThre = nanmean(tpval) + 3 * nanstd(tpval);
-                    
-                    idx_del = tpval >= valThre;
-                    
-                    lfp_matrix(idx_del,:,:) = nan;
+                    tpval = std(tp,0,2); valThre = nanmean(tpval) + 3 * nanstd(tpval);
+                    idx_del = tpval >= valThre; lfp_matrix(idx_del,:,:) = nan;
                     
                     totLFP{1,ch_i} = lfp_matrix;
-                    
                 end
             end
             
@@ -250,9 +209,7 @@ for f_i = 3:length(filenames)
             %% Tar channel
             checkChannel = zeros(1,8);
             for c_i = 1:8
-                if ~isempty(totLFP{1,c_i})
-                    checkChannel(c_i) = 1;
-                end
+                if ~isempty(totLFP{1,c_i}); checkChannel(c_i) = 1; end
             end
             tarChannel = find(checkChannel);
             
@@ -270,7 +227,6 @@ for f_i = 3:length(filenames)
                 nt(c_i)=sum(contains(t,mat2str(c_i)));
             end
             
-            %%% cell anal
             n_cell = sum(nt);
             
             tname_cell = cell(1,n_cell);
@@ -279,8 +235,7 @@ for f_i = 3:length(filenames)
             end
             
             totCell = cell(2,n_cell);
-            
-            totT = 13000; % 4000 + 4000 + 5000
+            totT = 13000; % 4000 + 4000 + 5000 ms
             for cell_i = 1:n_cell
                 load([ tname_cell{1,cell_i}  '.mat']);
                 
@@ -304,19 +259,16 @@ for f_i = 3:length(filenames)
                         continue;
                     end
                     
-                    spk_train(trial_i,:) = temp_spk(idx_trial); %%% 2 + 4 + 2
+                    spk_train(trial_i,:) = temp_spk(idx_trial);
                 end
                 totCell{1,cell_i} = tname_cell{1,cell_i};
                 totCell{2,cell_i} = spk_train;
             end
             
-            cd(path_save);
-            save(['Spike_' current_folder],'totCell','nt');
+            cd(path_save); save(['Spike_' current_folder],'totCell','nt');
             
             clearvars temp_spk spk_timing spk_timing_ms totCell;
             
         end
     end
 end
-
-toc;

@@ -1,22 +1,15 @@
 clear; clc;
 close all;
-%%
-% Code written by Lee H, Bae JW, Jeong H 
-% 2021 Nat. Commun. [Parallel processing of working memory and temporal
-% information by distinct types of cortical projection neurons]
-% last edited by Bae JW 2021-06-11
-%%
-tic;
 
+%% Set paths
+path_data = ''; % path where data saved
+paht_coh = ''; % path where results be saved
+
+%% Data preparation
 load('cellTable_v4.mat');
 load('tag_v5.mat');
 
-path_data = '';
-paht_coh = '';
-
 typeName = {'PT','IT','PC'};
-
-%% Data preparation
 D = [T.mouseNm,T.cellList, T.cellList, T.hyperLocation];
 
 for ii = 1:size(D,1)
@@ -24,21 +17,25 @@ for ii = 1:size(D,1)
     D(ii,3) = temp(end-8:end-4);
     
     temp = char(D(ii,2));
-    
     idx_dv = strfind(temp,'_');
     D(ii,2) = temp(idx_dv(3)+1:idx_dv(5)-1);
 end
 
-D_PT = D(tag.wsefr & tag.LFP & T.firingRate>0.5,:);
-D_IT = D(tag.wsrxfp & tag.LFP & T.firingRate>0.5,:);
-D_PC = D(tag.pc & tag.LFP & T.firingRate>0.5,:);
+%%% Wide spiking
+D_PT = D(tag.wsefr & tag.LFP & T.firingRate>0.05,:);
+D_IT = D(tag.wsrxfp & tag.LFP & T.firingRate>0.05,:);
+D_PC = D(tag.pc & tag.LFP & T.firingRate>0.05,:);
 
-%%
+%%% Narrow spiking
+% D_PT = D(tag.nsefr & tag.LFP & T.firingRate>0.05,:);
+% D_IT = D(tag.nsrxfp & tag.LFP & T.firingRate>0.05,:);
+% D_PC = D(tag.fs & tag.LFP & T.firingRate>0.05,:);
+
+%% Main
 totCoh_cell = cell(4,3);
 totCoh_cell_raw = cell(2,2,3);
 
 for type_i = 1:3
-    
     type_i
 
     if type_i == 1
@@ -56,35 +53,27 @@ for type_i = 1:3
 
     totC_correct = nan(61,121,size(neuronData,1));
     totC_error = nan(61,121,size(neuronData,1));
-    
-    %%%
+
     totC_correct_raw = nan(61,121,size(neuronData,1));
     totC_correct_cont = nan(61,121,size(neuronData,1));
     
     totC_error_raw = nan(61,121,size(neuronData,1));
     totC_error_cont = nan(61,121,size(neuronData,1));
 
-    
     idxTrialCountDir = nan(size(neuronData,1),4);
 
     for f_i = 3:length(temp_folder)
         
         disp(['%%%' num2str(f_i-2) ' / ' num2str(neuronN)]);
-        
         load([type_folder temp_folder(f_i).name]);
         
         checkChannel = zeros(1,8);
         for c_i = 1:8
-            if ~isempty(temp_coh_channel{1,c_i})
-                checkChannel(c_i) = 1;
-            end
+            if ~isempty(temp_coh_channel{1,c_i}); checkChannel(c_i) = 1; end
         end
         tarChannel = find(checkChannel);
         
-        if isempty(tarChannel)
-            disp('Jump');
-            continue;
-        end
+        if isempty(tarChannel); continue; end
         
         if ~isempty(temp_coh_channel{1,tarChannel(1)})
             time = temp_coh_channel{1,tarChannel(1)}{3,1};
@@ -94,11 +83,9 @@ for type_i = 1:3
         cellNum = temp_folder(f_i).name;
         cellNum(1:2) = []; cellNum(end-3:end) = []; 
         cellNum = str2double(cellNum);
-        
-        %%
-        temp = neuronData(cellNum,:);
 
         %% Read behav
+        temp = neuronData(cellNum,:);
         tpfolder = char(temp(1));
         cd([path_data '\save_' tpfolder]);
 
@@ -111,17 +98,15 @@ for type_i = 1:3
         idxTrialCountDir(cellNum,4) = sum(idx_RE_f);
         
         for correct_i = 1:2
-            
             temp_coh = nan(length(freq),length(time),8);
             temp_coh_raw = nan(length(freq),length(time),8);
             temp_coh_cont = nan(length(freq),length(time),8);
-            
             
             for c_i = 1:8
                 if c_i == channel_i; continue; end
                 if checkUseMat(c_i) == 0; continue; end
                 
-                if isempty(temp_coh_channel{1,c_i}); continue; end %%%% 21.02.26
+                if isempty(temp_coh_channel{1,c_i}); continue; end
                 
                 C_ori = temp_coh_channel{1,c_i}{1,correct_i}';
                 C_control = temp_coh_channel{1,c_i}{2,correct_i};
@@ -151,13 +136,10 @@ for type_i = 1:3
         end
         
     end
-    
     totCoh_cell{1,type_i} = totC_correct;
     totCoh_cell{2,type_i} = totC_error;    
-    
     totCoh_cell{4,type_i} = idxTrialCountDir;
     
-   %%%
     totCoh_cell_raw{1,1,type_i} = totC_correct_raw;
     totCoh_cell_raw{1,2,type_i} = totC_correct_cont;
     
@@ -166,6 +148,4 @@ for type_i = 1:3
 end
 
 cd(paht_coh);
-save('totC_210329.mat','totCoh_cell','totCoh_cell_raw','freq','time');
-
-toc;
+save('XX.mat','totCoh_cell','totCoh_cell_raw','freq','time');

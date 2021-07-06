@@ -1,54 +1,36 @@
 clear; clc;
 close all;
 
-%%
-% Code written by Lee H, Bae JW, Jeong H 
-% 2021 Nat. Commun. [Parallel processing of working memory and temporal
-% information by distinct types of cortical projection neurons]
-% last edited by Bae JW 2021-06-11
-%%
-tic;
-
-path_spec = '';
+path_spec = ''; path where data saved
 
 cd(path_spec);
-
 filelist = dir();
 
+%% Main
 totS = cell(1,3);
 idxTrialCountDir = [];
 
 for f_i = 3:length(filelist)
     
     clc;
-    disp([num2str(f_i) ' / ' num2str(length(filelist))]);
+    disp([num2str(f_i-2) ' / ' num2str(length(filelist)-2)]);
     
-    if ~contains(filelist(f_i).name,'save')
-        continue;
-    end
-    
+    if ~contains(filelist(f_i).name,'save'); continue; end
     load(filelist(f_i).name);
     
-    for session_i = 1:length(totSpec)
-        
+    for session_i = 1:length(totSpec)    
         disp(['%%%' num2str(session_i) ' / ' num2str(length(totSpec))]);
         
         checkChannel = zeros(1,8);
         for c_i = 1:8
-            if ~isempty(totSpec{1,session_i}{1,c_i})
-                checkChannel(c_i) = 1;
-            end
+            if ~isempty(totSpec{1,session_i}{1,c_i}); checkChannel(c_i) = 1; end
         end
         tarChannel = find(checkChannel);
-        
         if isempty(tarChannel); continue; end
         
-        check = 0;
-        cidx = 1;
-        
+        check = 0; cidx = 1;
         while check == 0
             temp_channel_use = totSpec{1,session_i}{1,tarChannel(cidx)}{4,1};
-            
             if isempty(temp_channel_use)
                 cidx = cidx + 1;
             else
@@ -59,16 +41,13 @@ for f_i = 3:length(filelist)
         time_spec = totSpec{1,session_i}{1,tarChannel(cidx)}{2,1};
         freq_spec = totSpec{1,session_i}{1,tarChannel(cidx)}{3,1};
         
-        %%%
         tempS_correct = nan(length(freq_spec),length(time_spec),8);
         tempS_error = nan(length(freq_spec),length(time_spec),8);
         
         minThre = 2;
         for c_i = 1:8
             if temp_channel_use(c_i) == 0; continue; end
-%             if prod(totSpec{3,session_i}{1,c_i}>=minThre) == 0; continue; end %%%%%%%%%
-
-            if prod(totSpec{2,session_i}>=minThre) == 0; continue; end %%%%%%%%% 21.03.13
+            if prod(totSpec{2,session_i}>=minThre) == 0; continue; end
             
             %%% Correct
             sav_i = 1;
@@ -105,18 +84,3 @@ for f_i = 3:length(filelist)
         end
     end
 end
-
-toc;
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,29 +1,20 @@
 clear; clc;
 close all;
-%%
-% Code written by Lee H, Bae JW, Jeong H 
-% 2021 Nat. Commun. [Parallel processing of working memory and temporal
-% information by distinct types of cortical projection neurons]
-% last edited by Bae JW 2021-06-11
-%%
 
 warning('off');
 
-tic;
+%% Set paths
+path_main = ''; % path where data saved
+save_coh = ''; % path where results be saved
 
+%% Data preparation
 load('cellTable_v4.mat');
 load('tag_v5.mat');
 
 idx_randDelay = 0;
-
-save_coh = '';
-path_main = ''; %%% Preprocessed data
-
 cd(path_main);
 
 typeName = {'PT','IT','PC'};
-
-%% Data preparation
 D = [T.mouseNm,T.cellList, T.cellList, T.hyperLocation];
 
 for ii = 1:size(D,1)
@@ -36,10 +27,10 @@ for ii = 1:size(D,1)
     D(ii,2) = temp(idx_dv(3)+1:idx_dv(5)-1);
 end
 
-%%% 0.5Hz
-D_PT1 = D(tag.wsefr & tag.LFP & T.firingRate>0.5,:);
-D_IT = D(tag.wsrxfp & tag.LFP & T.firingRate>0.5,:);
-D_PC = D(tag.pc & tag.LFP & T.firingRate>0.5,:); %%% 21.02.24 
+%%% 0.05Hz
+D_PT = D(tag.wsefr & tag.LFP & T.firingRate>0.05,:);
+D_IT = D(tag.wsrxfp & tag.LFP & T.firingRate>0.05,:);
+D_PC = D(tag.pc & tag.LFP & T.firingRate>0.05,:);
 
 list_folder = dir();
 
@@ -48,8 +39,9 @@ fq = 2; % [0.5 100] Hz
 
 Fs = 1000;
 
+%%% Need Chonux toolbox
 params.Fs=Fs; %Sampling rate
-params.tapers=[3 5]; %Taper parameters  %%%%%%%%%%%%%%%%%%%%%%%%% Fixed
+params.tapers=[3 5]; %Taper parameters
 params.fpass=[0.5 60]; %Look at 5-60 Hz band
 params.trialave = 1;
 
@@ -201,19 +193,19 @@ for type_i = 1:3
                 checknan = logical(sum(isnan(lfp_err),2) == size(lfp_err,2));
                 lfp_err(checknan,:) = []; spk_err(checknan,:) = [];
                 
-                ns = size(lfp_corr,1);
-                ne = size(lfp_err,1);
+                ns = size(lfp_corr,1); ne = size(lfp_err,1);
                 
                 %% Coherogram -Correct
                 if ~isempty(lfp_corr) && ~isempty(spk_corr)
                     
-                    lfp_corr = lfp_corr - repmat(nanmean(lfp_corr,2),[1 size(lfp_corr,2)]); %%% minus mean
+                    lfp_corr = lfp_corr - repmat(nanmean(lfp_corr,2),[1 size(lfp_corr,2)]);
                     
-                    lfp_corr = gpuArray(lfp_corr);
-                    spk_corr = gpuArray(spk_corr);
+%                     lfp_corr = gpuArray(lfp_corr);
+%                     spk_corr = gpuArray(spk_corr);
                     
                     sav_i = 1;
-                    [C,phi,S12,S1,S2,time,freq] = cohgramc_HS(spk_corr',lfp_corr',movingwin,params);
+                    [C,phi,S12,S1,S2,time,freq] = cohgramc(spk_corr',lfp_corr',movingwin,params); %%% To run faster, you may use GPU (Use gpuarray, gather)
+%                     [C,phi,S12,S1,S2,time,freq] = cohgramc_HS(spk_corr',lfp_corr',movingwin,params);
                     
                     temp_save{1,sav_i} = C;
                     
@@ -221,9 +213,11 @@ for type_i = 1:3
                     for tr_i = 1:size(lfp_corr,1)-1
                         lfp_shift = circshift(lfp_corr, -tr_i, 1);
                         
-                        lfp_shift = gpuArray(lfp_shift);
+%                         lfp_shift = gpuArray(lfp_shift);
                         
-                        [C_shift,phi,S12,S1,S2,time,freq] = cohgramc_HS(spk_corr',lfp_shift',movingwin,params);
+                        [C_shift,phi,S12,S1,S2,time,freq] = cohgramc(spk_corr',lfp_shift',movingwin,params); %%% To run faster, you may use GPU (Use gpuarray, gather)
+%                         [C_shift,phi,S12,S1,S2,time,freq] = cohgramc_HS(spk_corr',lfp_shift',movingwin,params);
+                        
                         temp_save{2,sav_i} = cat(3,temp_save{2,sav_i},C_shift);
                     end
                     
@@ -235,22 +229,25 @@ for type_i = 1:3
                 %% Coherogram -Error
                 if ~isempty(lfp_err) && ~isempty(spk_err)
                     
-                    lfp_err = lfp_err - repmat(nanmean(lfp_err,2),[1 size(lfp_err,2)]); %%% minus mean
+                    lfp_err = lfp_err - repmat(nanmean(lfp_err,2),[1 size(lfp_err,2)]);
                     
-                    lfp_err = gpuArray(lfp_err);
-                    spk_err = gpuArray(spk_err);
+%                     lfp_err = gpuArray(lfp_err);
+%                     spk_err = gpuArray(spk_err);
                     
                     sav_i = 2;
-                    [C,phi,S12,S1,S2,time,freq] = cohgramc_HS(spk_err',lfp_err',movingwin,params);
+                    [C,phi,S12,S1,S2,time,freq] = cohgramc(spk_err',lfp_err',movingwin,params); %%% To run faster, you may use GPU (Use gpuarray, gather)
+%                     [C,phi,S12,S1,S2,time,freq] = cohgramc_HS(spk_err',lfp_err',movingwin,params);
                     
                     temp_save{1,sav_i} = C;
                     %%% Control
                     for tr_i = 1:size(lfp_err,1)-1
                         lfp_shift = circshift(lfp_err, -tr_i, 1);
                         
-                        lfp_shift = gpuArray(lfp_shift);
+%                         lfp_shift = gpuArray(lfp_shift);
                         
-                        [C_shift,phi,S12,S1,S2,time,freq] = cohgramc_HS(spk_err',lfp_shift',movingwin,params);
+                        [C_shift,phi,S12,S1,S2,time,freq] = cohgramc(spk_err',lfp_shift',movingwin,params); %%% To run faster, you may use GPU (Use gpuarray, gather)
+%                         [C_shift,phi,S12,S1,S2,time,freq] = cohgramc_HS(spk_err',lfp_shift',movingwin,params);
+
                         temp_save{2,sav_i} = cat(3,temp_save{2,sav_i},C_shift);
                         temp_save{5,sav_i} = ne;
                     end
@@ -275,6 +272,3 @@ for type_i = 1:3
         
     end
 end
-
-toc;
-
